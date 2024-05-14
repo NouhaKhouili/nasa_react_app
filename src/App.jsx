@@ -9,37 +9,39 @@ function App() {
   const [data, setData] = useState(null);
   const [Loading, setLoading] = useState(false);
 
-  const today = new Date().toDateString;
-  const localKey = `NASA-${today}`;
-  if (localStorage.getItem(localKey)) {
-    const apiData = JSON.parse(localStorage.getItem(localKey));
-    setData(apiData);
-    console.log("ferched from cache today");
-    return;
-  }
-  localStorage.clear();
-
   useEffect(() => {
-    async function fetchAPIData() {
-      const url =
-        "https://api.nasa.gov/planetary/apod" + `?api_key=${NASA_KEY}`;
-      try {
-        const res = await fetch(url);
-        const apiData = await res.json();
-        localStorage.setItem(localKey, JSON.stringify(apiData));
-        setData(apiData);
-        console.log("ferched from API today");
-        console.log("Data\n", apiData);
-      } catch (error) {
-        console.log(error.message);
+    const today = new Date().toDateString();
+    const localKey = `NASA-${today}`;
+
+    // Check if data exists in localStorage
+    const cachedData = localStorage.getItem(localKey);
+    if (cachedData) {
+      setData(JSON.parse(cachedData));
+      console.log("fetched from cache today");
+    } else {
+      // Fetch data from API
+      async function fetchAPIData() {
+        const url =
+          "https://api.nasa.gov/planetary/apod" + `?api_key=${NASA_KEY}`;
+        try {
+          const res = await fetch(url);
+          const apiData = await res.json();
+          // Save data to localStorage
+          localStorage.setItem(localKey, JSON.stringify(apiData));
+          setData(apiData);
+          console.log("Data\n", apiData);
+        } catch (error) {
+          console.log(error.message);
+        }
       }
+      fetchAPIData();
     }
-    fetchAPIData();
-  }, []);
+  }, [NASA_KEY]); // useEffect dependency
 
   function handleToggleModal() {
     setShowModal(!showModal);
   }
+
   return (
     <>
       {showModal && (
